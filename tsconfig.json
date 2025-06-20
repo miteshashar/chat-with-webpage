@@ -9,10 +9,5 @@
     "composite": true,
     "declaration": true,
     "declarationMap": true
-  },
-  "references": [
-    { "path": "./packages/shared" },
-    { "path": "./apps/web" },
-    { "path": "./apps/extension" }
-  ]
+  }
 }
