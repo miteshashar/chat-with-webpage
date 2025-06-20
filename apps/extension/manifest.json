@@ -4,6 +4,9 @@
   "version": "0.1.0",
   "description": "Chat with any webpage using AI",
   "permissions": ["activeTab", "storage", "sidePanel"],
+  "externally_connectable": {
+    "matches": ["http://localhost:5173/*"]
+  },
   "action": {
     "default_title": "Open Chat with Webpage"
   },
