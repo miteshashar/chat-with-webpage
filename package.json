@@ -51,7 +51,7 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{json,md,yml,yaml}": [
+    "*.{css,html,json,md,yml,yaml}": [
       "prettier --write"
     ]
   }
