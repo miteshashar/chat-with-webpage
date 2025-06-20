@@ -1,22 +1,13 @@
 {
   "name": "shared",
   "version": "0.1.0",
-  "main": "./dist/index.js",
-  "types": "./dist/index.d.ts",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
   "exports": {
-    ".": {
-      "types": "./dist/index.d.ts",
-      "import": "./dist/index.js",
-      "require": "./dist/index.cjs"
-    }
+    ".": "./src/index.ts"
   },
   "scripts": {
-    "build": "vite build",
     "dev": "echo 'Shared package - no dev server needed'",
     "type-check": "tsc --noEmit"
-  },
-  "devDependencies": {
-    "typescript": "^5.8.3",
-    "vite-plugin-dts": "^4.5.4"
   }
 }
