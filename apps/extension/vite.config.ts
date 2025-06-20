@@ -7,5 +7,12 @@ export default defineConfig({
   plugins: [react(), crx({ manifest })],
   server: {
     port: 5174,
+    hmr: {
+      port: 5175,
+    },
+  },
+  build: {
+    minify: false,
+    sourcemap: true,
   },
 });
