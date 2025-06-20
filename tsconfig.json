@@ -1,0 +1,18 @@
+{
+  "extends": ["@tsconfig/node-lts/tsconfig", "@tsconfig/vite-react/tsconfig"],
+  "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "shared": ["./packages/shared/src/index.ts"],
+      "shared/*": ["./packages/shared/src/*"]
+    },
+    "composite": true,
+    "declaration": true,
+    "declarationMap": true
+  },
+  "references": [
+    { "path": "./packages/shared" },
+    { "path": "./apps/web" },
+    { "path": "./apps/extension" }
+  ]
+}
