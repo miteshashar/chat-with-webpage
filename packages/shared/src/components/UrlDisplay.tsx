@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useUrl } from "../context/useUrl";
+import { UI } from "../constants";
 
 export function UrlDisplay() {
   const { currentUrl, currentTitle, setCurrentUrl, isLoading, error } =
@@ -18,7 +19,10 @@ export function UrlDisplay() {
     chrome.runtime.getManifest;
   const isWeb = !isExtension && !currentUrl;
 
-  const truncate = (url: string, maxLength: number = 40) => {
+  const truncate = (
+    url: string,
+    maxLength: number = UI.MAX_URL_DISPLAY_LENGTH,
+  ) => {
     if (url.length <= maxLength) return url;
     return url.substring(0, maxLength) + "...";
   };

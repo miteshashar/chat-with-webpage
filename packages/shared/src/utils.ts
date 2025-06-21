@@ -10,3 +10,4 @@ export async function sha256Hash(text: string): Promise<string> {
 }
 
 export * from "./utils/webScraping";
+export * from "./utils/environment";

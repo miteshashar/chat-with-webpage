@@ -1,5 +1,6 @@
-import { get, set, getAllKeys } from "./storage";
+import { get, set } from "./storage";
 import { sha256Hash } from "../utils";
+import { STORAGE_PREFIXES } from "../constants";
 
 export interface CachedMarkdown {
   url: string;
@@ -14,7 +15,7 @@ export const saveMarkdownCache = async (
   title: string,
 ): Promise<void> => {
   const hash = await sha256Hash(url);
-  const key = `markdown-${hash}`;
+  const key = `${STORAGE_PREFIXES.MARKDOWN}${hash}`;
   const cachedData: CachedMarkdown = {
     url,
     markdown,
@@ -28,7 +29,7 @@ export const getMarkdownCache = async (
   url: string,
 ): Promise<CachedMarkdown | null> => {
   const hash = await sha256Hash(url);
-  const key = `markdown-${hash}`;
+  const key = `${STORAGE_PREFIXES.MARKDOWN}${hash}`;
   const cached = await get<CachedMarkdown>(key);
 
   if (cached) {
@@ -39,25 +40,4 @@ export const getMarkdownCache = async (
   }
 
   return null;
-};
-
-export const getAllCachedMarkdown = async (): Promise<CachedMarkdown[]> => {
-  const allKeys = await getAllKeys();
-  const markdownKeys = allKeys.filter((key) => key.startsWith("markdown-"));
-
-  const promises = markdownKeys.map(async (key) => {
-    const cached = await get<CachedMarkdown>(key);
-    if (cached) {
-      return {
-        ...cached,
-        timestamp: new Date(cached.timestamp),
-      };
-    }
-    return null;
-  });
-
-  const results = await Promise.all(promises);
-  return results
-    .filter((item): item is CachedMarkdown => item !== null)
-    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()); // Sort by newest first
 };

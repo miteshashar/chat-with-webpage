@@ -3,7 +3,14 @@ import type { ReactNode } from "react";
 import TurndownService from "turndown";
 import { UrlContext } from "./UrlContextTypes";
 import { saveMarkdownCache, getMarkdownCache } from "../storage";
-import { fetchWebpage, WebScrapingError } from "../utils";
+import {
+  fetchWebpage,
+  WebScrapingError,
+  isWeb,
+  isExtension,
+  isOnChatWebApp,
+} from "../utils";
+import { STORAGE_KEYS, ERROR_MESSAGES } from "../constants";
 
 interface UrlProviderProps {
   children: ReactNode;
@@ -61,16 +68,10 @@ const processPageData = async (
   }
 };
 
-const isWebEnvironment = () => {
-  return !(
-    typeof chrome !== "undefined" &&
-    chrome.runtime &&
-    chrome.runtime.getManifest
-  );
-};
+// Use centralized environment detection
 
 const saveToLocalStorage = (key: string, value: unknown) => {
-  if (isWebEnvironment()) {
+  if (isWeb()) {
     try {
       localStorage.setItem(key, JSON.stringify(value));
     } catch (error) {
@@ -80,7 +81,7 @@ const saveToLocalStorage = (key: string, value: unknown) => {
 };
 
 const getFromLocalStorage = (key: string) => {
-  if (isWebEnvironment()) {
+  if (isWeb()) {
     try {
       const item = localStorage.getItem(key);
       return item ? JSON.parse(item) : null;
@@ -102,12 +103,7 @@ export function UrlProvider({ children }: UrlProviderProps) {
 
   const setCurrentUrl = async (url: string) => {
     // Only allow manual URL setting in web environment, not extension
-    const isExtension =
-      typeof chrome !== "undefined" &&
-      chrome.runtime &&
-      chrome.runtime.getManifest;
-
-    if (isExtension) {
+    if (isExtension()) {
       // In extension, URLs are set automatically by background script
       return;
     }
@@ -124,7 +120,7 @@ export function UrlProvider({ children }: UrlProviderProps) {
       setCurrentTitle(cached.title);
       setCurrentHtml(""); // We don't cache HTML
       setCurrentMarkdown(cached.markdown);
-      saveToLocalStorage("lastUrl", url);
+      saveToLocalStorage(STORAGE_KEYS.LAST_URL, url);
       setIsLoading(false);
       return;
     }
@@ -138,12 +134,12 @@ export function UrlProvider({ children }: UrlProviderProps) {
         setCurrentHtml,
         setCurrentMarkdown,
       });
-      saveToLocalStorage("lastUrl", url);
+      saveToLocalStorage(STORAGE_KEYS.LAST_URL, url);
     } catch (error) {
       if (error instanceof WebScrapingError) {
         setError(error.message);
       } else {
-        setError("An unknown error occurred while fetching the webpage.");
+        setError(ERROR_MESSAGES.UNKNOWN_ERROR);
       }
 
       // Clear state on error
@@ -158,8 +154,8 @@ export function UrlProvider({ children }: UrlProviderProps) {
 
   useEffect(() => {
     // Load last URL from localStorage (web only)
-    if (isWebEnvironment()) {
-      const lastUrl = getFromLocalStorage("lastUrl");
+    if (isWeb()) {
+      const lastUrl = getFromLocalStorage(STORAGE_KEYS.LAST_URL);
       if (lastUrl && typeof lastUrl === "string") {
         setCurrentUrl(lastUrl);
         return;
@@ -167,12 +163,7 @@ export function UrlProvider({ children }: UrlProviderProps) {
     }
 
     // Auto-detect environment
-    const isExtension =
-      typeof chrome !== "undefined" &&
-      chrome.runtime &&
-      chrome.runtime.getManifest;
-
-    if (isExtension) {
+    if (isExtension()) {
       // Extension: Get page data from background script
       const getPageData = async () => {
         try {
@@ -181,17 +172,12 @@ export function UrlProvider({ children }: UrlProviderProps) {
           });
           if (response?.data) {
             // Check if we're on the chat web app
-            if (
-              response.data.url.includes("localhost:5173") ||
-              response.data.url.includes("127.0.0.1:5173")
-            ) {
+            if (isOnChatWebApp(response.data.url)) {
               setCurrentUrlState(response.data.url);
               setCurrentTitle(response.data.title);
               setCurrentHtml("");
               setCurrentMarkdown("");
-              setError(
-                "This extension cannot chat with its own web application. Please navigate to a different webpage to start chatting.",
-              );
+              setError(ERROR_MESSAGES.CHAT_WEB_APP_BLOCKED);
             } else {
               setError(null); // Clear any previous error
               await processPageData(
@@ -221,17 +207,12 @@ export function UrlProvider({ children }: UrlProviderProps) {
       }) => {
         if (message.type === "PAGE_DATA_UPDATED" && message.data) {
           // Check if we're on the chat web app
-          if (
-            message.data.url.includes("localhost:5173") ||
-            message.data.url.includes("127.0.0.1:5173")
-          ) {
+          if (isOnChatWebApp(message.data.url)) {
             setCurrentUrlState(message.data.url);
             setCurrentTitle(message.data.title);
             setCurrentHtml("");
             setCurrentMarkdown("");
-            setError(
-              "This extension cannot chat with its own web application. Please navigate to a different webpage to start chatting.",
-            );
+            setError(ERROR_MESSAGES.CHAT_WEB_APP_BLOCKED);
           } else {
             setError(null); // Clear any previous error
             await processPageData(

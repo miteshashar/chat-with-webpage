@@ -1,5 +1,6 @@
 import { get, set, getAllKeys } from "./storage";
 import { sha256Hash } from "../utils";
+import { STORAGE_PREFIXES } from "../constants";
 
 export interface Message {
   id: string;
@@ -20,13 +21,13 @@ export const saveMessage = async (
   url: string,
 ): Promise<void> => {
   const hash = await sha256Hash(url);
-  const key = `msg-${hash}-${message.role}-${message.timestamp.getTime()}`;
+  const key = `${STORAGE_PREFIXES.MESSAGE}${hash}-${message.role}-${message.timestamp.getTime()}`;
   return set(key, message);
 };
 
 export const getMessagesForUrl = async (url: string): Promise<Message[]> => {
   const hash = await sha256Hash(url);
-  const prefix = `msg-${hash}-`;
+  const prefix = `${STORAGE_PREFIXES.MESSAGE}${hash}-`;
 
   // Get all keys from storage
   const keys = await getAllKeys();
@@ -56,7 +57,9 @@ export interface ChatHistoryEntry {
 
 export const getAllChatHistory = async (): Promise<ChatHistoryEntry[]> => {
   const keys = await getAllKeys();
-  const messageKeys = keys.filter((key: string) => key.startsWith("msg-"));
+  const messageKeys = keys.filter((key: string) =>
+    key.startsWith(STORAGE_PREFIXES.MESSAGE),
+  );
 
   // Group by URL hash
   const urlHashes = new Map<string, { messages: Message[]; hash: string }>();
@@ -65,7 +68,7 @@ export const getAllChatHistory = async (): Promise<ChatHistoryEntry[]> => {
     const message = await get<Message>(key);
 
     if (message) {
-      // Extract hash from key: msg-{hash}-{role}-{timestamp}
+      // Extract hash from key: {PREFIX}{hash}-{role}-{timestamp}
       const parts = key.split("-");
 
       if (parts.length >= 4) {
@@ -92,7 +95,7 @@ export const getAllChatHistory = async (): Promise<ChatHistoryEntry[]> => {
       );
 
       // Try to get title from markdown cache
-      const markdownKey = `markdown-${hash}`;
+      const markdownKey = `${STORAGE_PREFIXES.MARKDOWN}${hash}`;
       const cached = await get<CachedMarkdown>(markdownKey);
 
       // Use cached data if available, otherwise use hash as fallback

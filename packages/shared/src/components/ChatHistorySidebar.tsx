@@ -1,47 +1,43 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useUrl } from "../context/useUrl";
 import { getAllChatHistory, type ChatHistoryEntry } from "../storage";
+import { isExtension } from "../utils";
+import { TIMEOUTS, UI } from "../constants";
 
 export function ChatHistorySidebar() {
   const { setCurrentUrl, currentUrl } = useUrl();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [chatHistory, setChatHistory] = useState<ChatHistoryEntry[]>([]);
 
-  // Check if we're in extension environment
-  const isExtension =
-    typeof chrome !== "undefined" &&
-    chrome.runtime &&
-    chrome.runtime.getManifest;
-
   // Don't show sidebar in extension
-  if (isExtension) {
+  if (isExtension()) {
     return null;
   }
 
-  const loadChatHistory = async () => {
+  const loadChatHistory = useCallback(async () => {
     try {
       const history = await getAllChatHistory();
       setChatHistory(history);
     } catch (error) {
       console.error("Failed to load chat history:", error);
     }
-  };
+  }, []);
 
   // Load chat history on mount
   useEffect(() => {
     loadChatHistory();
-  }, []);
+  }, [loadChatHistory]);
 
-  // More frequent refresh to catch new messages quickly
+  // Reduced frequency polling - only as fallback
   useEffect(() => {
     const interval = setInterval(() => {
       loadChatHistory();
-    }, 1000); // Refresh every 1 second for very responsive updates
+    }, TIMEOUTS.CHAT_HISTORY_REFRESH);
 
     return () => clearInterval(interval);
-  }, []);
+  }, [loadChatHistory]);
 
-  // Also refresh when window gains focus (user might have used extension)
+  // Refresh when window gains focus
   useEffect(() => {
     const handleFocus = () => {
       loadChatHistory();
@@ -49,15 +45,18 @@ export function ChatHistorySidebar() {
 
     window.addEventListener("focus", handleFocus);
     return () => window.removeEventListener("focus", handleFocus);
-  }, []);
+  }, [loadChatHistory]);
 
-  // Also refresh when current URL changes (for immediate feedback)
+  // Immediate refresh when URL changes
   useEffect(() => {
     if (currentUrl) {
-      const timeoutId = setTimeout(loadChatHistory, 500);
+      const timeoutId = setTimeout(
+        loadChatHistory,
+        TIMEOUTS.URL_CHANGE_DEBOUNCE,
+      );
       return () => clearTimeout(timeoutId);
     }
-  }, [currentUrl]);
+  }, [currentUrl, loadChatHistory]);
 
   const formatDate = (date: Date) => {
     const now = new Date();
@@ -75,7 +74,10 @@ export function ChatHistorySidebar() {
     }
   };
 
-  const truncateTitle = (title: string, maxLength: number = 30) => {
+  const truncateTitle = (
+    title: string,
+    maxLength: number = UI.MAX_TITLE_LENGTH,
+  ) => {
     if (title.length <= maxLength) return title;
     return title.substring(0, maxLength) + "...";
   };

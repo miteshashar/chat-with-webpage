@@ -16,7 +16,9 @@ export class WebScrapingError extends Error {
   }
 }
 
-const BACKEND_PROXY_URL = "http://localhost:3000";
+import { DEV_URLS, ERROR_MESSAGES } from "../constants";
+
+const BACKEND_PROXY_URL = DEV_URLS.BACKEND_PROXY;
 
 export const fetchWebpage = async (url: string): Promise<WebPageData> => {
   try {
@@ -58,7 +60,7 @@ export const fetchWebpage = async (url: string): Promise<WebPageData> => {
     ) {
       throw new WebScrapingError(
         "CORS_ERROR",
-        "Unable to access webpage. Please ensure the backend proxy server is running on port 3000, or use the Chrome extension.",
+        ERROR_MESSAGES.PROXY_SERVER_DOWN,
       );
     }
 
