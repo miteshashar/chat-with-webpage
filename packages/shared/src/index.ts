@@ -2,3 +2,6 @@
 
 // Storage utilities
 export * from "./storage";
+
+// Components
+export * from "./components";

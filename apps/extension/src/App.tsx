@@ -1,11 +1,8 @@
+import { SettingsChecker } from "shared";
 import "./App.css";
 
 function App() {
-  return (
-    <div>
-      <h1>Chat with Webpage Extension</h1>
-    </div>
-  );
+  return <SettingsChecker>Token available</SettingsChecker>;
 }
 
 export default App;
