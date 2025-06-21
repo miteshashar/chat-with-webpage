@@ -4,6 +4,7 @@ export interface UrlContextType {
   currentUrl: string | null;
   currentTitle: string | null;
   currentHtml: string | null;
+  currentMarkdown: string | null;
   setCurrentUrl: (url: string) => void;
   isLoading: boolean;
 }

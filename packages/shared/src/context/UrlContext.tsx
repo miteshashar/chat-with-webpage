@@ -1,15 +1,31 @@
 import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
+import TurndownService from "turndown";
 import { UrlContext } from "./UrlContextTypes";
 
 interface UrlProviderProps {
   children: ReactNode;
 }
 
+// Initialize turndown service outside component to avoid recreation
+const turndownService = new TurndownService({
+  headingStyle: "atx",
+  codeBlockStyle: "fenced",
+});
+
+const convertHtmlToMarkdown = (html: string): string => {
+  try {
+    return turndownService.turndown(html);
+  } catch {
+    return html; // Fallback to HTML if conversion fails
+  }
+};
+
 export function UrlProvider({ children }: UrlProviderProps) {
   const [currentUrl, setCurrentUrlState] = useState<string | null>(null);
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
   const [currentHtml, setCurrentHtml] = useState<string | null>(null);
+  const [currentMarkdown, setCurrentMarkdown] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
   const setCurrentUrl = (url: string) => {
@@ -34,6 +50,11 @@ export function UrlProvider({ children }: UrlProviderProps) {
             setCurrentUrlState(response.data.url);
             setCurrentTitle(response.data.title);
             setCurrentHtml(response.data.html);
+            setCurrentMarkdown(
+              response.data.html
+                ? convertHtmlToMarkdown(response.data.html)
+                : null,
+            );
           }
         } catch {
           // Silently handle errors
@@ -51,6 +72,9 @@ export function UrlProvider({ children }: UrlProviderProps) {
           setCurrentUrlState(message.data.url);
           setCurrentTitle(message.data.title);
           setCurrentHtml(message.data.html);
+          setCurrentMarkdown(
+            message.data.html ? convertHtmlToMarkdown(message.data.html) : null,
+          );
         }
       };
 
@@ -81,6 +105,7 @@ export function UrlProvider({ children }: UrlProviderProps) {
         currentUrl,
         currentTitle,
         currentHtml,
+        currentMarkdown,
         setCurrentUrl,
         isLoading,
       }}

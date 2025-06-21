@@ -1,8 +1,7 @@
 import { useUrl } from "../context/useUrl";
 
 export function UrlDisplay() {
-  const { currentUrl, currentTitle, currentHtml, setCurrentUrl, isLoading } =
-    useUrl();
+  const { currentUrl, currentTitle, setCurrentUrl, isLoading } = useUrl();
 
   if (isLoading) {
     return <div className="text-gray-500">Loading current page...</div>;
@@ -49,7 +48,6 @@ export function UrlDisplay() {
           <p className="text-xs break-all text-gray-600" title={currentUrl}>
             {truncate(currentUrl)}
           </p>
-          {currentHtml && ""}
         </div>
       ) : (
         <p className="text-sm text-gray-500">No page detected</p>
