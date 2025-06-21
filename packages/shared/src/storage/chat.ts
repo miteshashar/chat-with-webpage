@@ -8,6 +8,13 @@ export interface Message {
   timestamp: Date;
 }
 
+export interface CachedMarkdown {
+  url: string;
+  markdown: string;
+  title: string;
+  timestamp: Date;
+}
+
 export const saveMessage = async (
   message: Message,
   url: string,

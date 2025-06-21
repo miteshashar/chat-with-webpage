@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import type { ReactNode } from "react";
 import TurndownService from "turndown";
 import { UrlContext } from "./UrlContextTypes";
+import { saveMarkdownCache, getMarkdownCache } from "../storage";
 
 interface UrlProviderProps {
   children: ReactNode;
@@ -18,6 +19,44 @@ const convertHtmlToMarkdown = (html: string): string => {
     return turndownService.turndown(html);
   } catch {
     return html; // Fallback to HTML if conversion fails
+  }
+};
+
+const processPageData = async (
+  url: string,
+  title: string,
+  html: string,
+  setters: {
+    setCurrentUrlState: (url: string) => void;
+    setCurrentTitle: (title: string) => void;
+    setCurrentHtml: (html: string) => void;
+    setCurrentMarkdown: (markdown: string) => void;
+  },
+) => {
+  // Check cache first
+  const cached = await getMarkdownCache(url);
+
+  if (cached && cached.url === url) {
+    // Use cached data
+    setters.setCurrentUrlState(url);
+    setters.setCurrentTitle(cached.title);
+    setters.setCurrentHtml(html); // Always use fresh HTML
+    setters.setCurrentMarkdown(cached.markdown);
+  } else {
+    // Process fresh data and cache it
+    const markdown = convertHtmlToMarkdown(html);
+
+    setters.setCurrentUrlState(url);
+    setters.setCurrentTitle(title);
+    setters.setCurrentHtml(html);
+    setters.setCurrentMarkdown(markdown);
+
+    // Cache the processed markdown
+    try {
+      await saveMarkdownCache(url, markdown, title);
+    } catch (error) {
+      console.error("Error saving markdown cache:", error);
+    }
   }
 };
 
@@ -47,13 +86,16 @@ export function UrlProvider({ children }: UrlProviderProps) {
             type: "GET_PAGE_DATA",
           });
           if (response?.data) {
-            setCurrentUrlState(response.data.url);
-            setCurrentTitle(response.data.title);
-            setCurrentHtml(response.data.html);
-            setCurrentMarkdown(
-              response.data.html
-                ? convertHtmlToMarkdown(response.data.html)
-                : null,
+            await processPageData(
+              response.data.url,
+              response.data.title,
+              response.data.html,
+              {
+                setCurrentUrlState,
+                setCurrentTitle,
+                setCurrentHtml,
+                setCurrentMarkdown,
+              },
             );
           }
         } catch {
@@ -64,16 +106,21 @@ export function UrlProvider({ children }: UrlProviderProps) {
       };
 
       // Listen for page data updates from background script
-      const handlePageDataUpdate = (message: {
+      const handlePageDataUpdate = async (message: {
         type: string;
         data?: { url: string; title: string; html: string };
       }) => {
         if (message.type === "PAGE_DATA_UPDATED" && message.data) {
-          setCurrentUrlState(message.data.url);
-          setCurrentTitle(message.data.title);
-          setCurrentHtml(message.data.html);
-          setCurrentMarkdown(
-            message.data.html ? convertHtmlToMarkdown(message.data.html) : null,
+          await processPageData(
+            message.data.url,
+            message.data.title,
+            message.data.html,
+            {
+              setCurrentUrlState,
+              setCurrentTitle,
+              setCurrentHtml,
+              setCurrentMarkdown,
+            },
           );
         }
       };

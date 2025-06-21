@@ -6,3 +6,10 @@ export { getToken, setToken, removeToken, isValidToken } from "./token";
 
 // Chat-specific helpers
 export { saveMessage, getMessagesForUrl, type Message } from "./chat";
+
+// Markdown cache helpers
+export {
+  saveMarkdownCache,
+  getMarkdownCache,
+  type CachedMarkdown,
+} from "./markdown";
