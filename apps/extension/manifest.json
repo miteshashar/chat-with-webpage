@@ -3,7 +3,8 @@
   "name": "Chat with Webpage",
   "version": "0.1.0",
   "description": "Chat with any webpage using AI",
-  "permissions": ["activeTab", "sidePanel", "tabs"],
+  "permissions": ["sidePanel", "tabs", "scripting"],
+  "host_permissions": ["http://*/*", "https://*/*"],
   "externally_connectable": {
     "matches": ["http://localhost:5173/*"]
   },
