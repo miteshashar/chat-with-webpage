@@ -1,4 +1,4 @@
-import { get, set } from "./storage";
+import { get, set, getAllKeys } from "./storage";
 import { sha256Hash } from "../utils";
 
 export interface CachedMarkdown {
@@ -39,4 +39,25 @@ export const getMarkdownCache = async (
   }
 
   return null;
+};
+
+export const getAllCachedMarkdown = async (): Promise<CachedMarkdown[]> => {
+  const allKeys = await getAllKeys();
+  const markdownKeys = allKeys.filter((key) => key.startsWith("markdown-"));
+
+  const promises = markdownKeys.map(async (key) => {
+    const cached = await get<CachedMarkdown>(key);
+    if (cached) {
+      return {
+        ...cached,
+        timestamp: new Date(cached.timestamp),
+      };
+    }
+    return null;
+  });
+
+  const results = await Promise.all(promises);
+  return results
+    .filter((item): item is CachedMarkdown => item !== null)
+    .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime()); // Sort by newest first
 };

@@ -61,6 +61,37 @@ const processPageData = async (
   }
 };
 
+const isWebEnvironment = () => {
+  return !(
+    typeof chrome !== "undefined" &&
+    chrome.runtime &&
+    chrome.runtime.getManifest
+  );
+};
+
+const saveToLocalStorage = (key: string, value: unknown) => {
+  if (isWebEnvironment()) {
+    try {
+      localStorage.setItem(key, JSON.stringify(value));
+    } catch (error) {
+      console.error("Failed to save to localStorage:", error);
+    }
+  }
+};
+
+const getFromLocalStorage = (key: string) => {
+  if (isWebEnvironment()) {
+    try {
+      const item = localStorage.getItem(key);
+      return item ? JSON.parse(item) : null;
+    } catch (error) {
+      console.error("Failed to read from localStorage:", error);
+      return null;
+    }
+  }
+  return null;
+};
+
 export function UrlProvider({ children }: UrlProviderProps) {
   const [currentUrl, setCurrentUrlState] = useState<string | null>(null);
   const [currentTitle, setCurrentTitle] = useState<string | null>(null);
@@ -93,6 +124,7 @@ export function UrlProvider({ children }: UrlProviderProps) {
       setCurrentTitle(cached.title);
       setCurrentHtml(""); // We don't cache HTML
       setCurrentMarkdown(cached.markdown);
+      saveToLocalStorage("lastUrl", url);
       setIsLoading(false);
       return;
     }
@@ -106,6 +138,7 @@ export function UrlProvider({ children }: UrlProviderProps) {
         setCurrentHtml,
         setCurrentMarkdown,
       });
+      saveToLocalStorage("lastUrl", url);
     } catch (error) {
       if (error instanceof WebScrapingError) {
         setError(error.message);
@@ -124,6 +157,15 @@ export function UrlProvider({ children }: UrlProviderProps) {
   };
 
   useEffect(() => {
+    // Load last URL from localStorage (web only)
+    if (isWebEnvironment()) {
+      const lastUrl = getFromLocalStorage("lastUrl");
+      if (lastUrl && typeof lastUrl === "string") {
+        setCurrentUrl(lastUrl);
+        return;
+      }
+    }
+
     // Auto-detect environment
     const isExtension =
       typeof chrome !== "undefined" &&
@@ -138,17 +180,32 @@ export function UrlProvider({ children }: UrlProviderProps) {
             type: "GET_PAGE_DATA",
           });
           if (response?.data) {
-            await processPageData(
-              response.data.url,
-              response.data.title,
-              response.data.html,
-              {
-                setCurrentUrlState,
-                setCurrentTitle,
-                setCurrentHtml,
-                setCurrentMarkdown,
-              },
-            );
+            // Check if we're on the chat web app
+            if (
+              response.data.url.includes("localhost:5173") ||
+              response.data.url.includes("127.0.0.1:5173")
+            ) {
+              setCurrentUrlState(response.data.url);
+              setCurrentTitle(response.data.title);
+              setCurrentHtml("");
+              setCurrentMarkdown("");
+              setError(
+                "This extension cannot chat with its own web application. Please navigate to a different webpage to start chatting.",
+              );
+            } else {
+              setError(null); // Clear any previous error
+              await processPageData(
+                response.data.url,
+                response.data.title,
+                response.data.html,
+                {
+                  setCurrentUrlState,
+                  setCurrentTitle,
+                  setCurrentHtml,
+                  setCurrentMarkdown,
+                },
+              );
+            }
           }
         } catch {
           // Silently handle errors
@@ -163,17 +220,32 @@ export function UrlProvider({ children }: UrlProviderProps) {
         data?: { url: string; title: string; html: string };
       }) => {
         if (message.type === "PAGE_DATA_UPDATED" && message.data) {
-          await processPageData(
-            message.data.url,
-            message.data.title,
-            message.data.html,
-            {
-              setCurrentUrlState,
-              setCurrentTitle,
-              setCurrentHtml,
-              setCurrentMarkdown,
-            },
-          );
+          // Check if we're on the chat web app
+          if (
+            message.data.url.includes("localhost:5173") ||
+            message.data.url.includes("127.0.0.1:5173")
+          ) {
+            setCurrentUrlState(message.data.url);
+            setCurrentTitle(message.data.title);
+            setCurrentHtml("");
+            setCurrentMarkdown("");
+            setError(
+              "This extension cannot chat with its own web application. Please navigate to a different webpage to start chatting.",
+            );
+          } else {
+            setError(null); // Clear any previous error
+            await processPageData(
+              message.data.url,
+              message.data.title,
+              message.data.html,
+              {
+                setCurrentUrlState,
+                setCurrentTitle,
+                setCurrentHtml,
+                setCurrentMarkdown,
+              },
+            );
+          }
         }
       };
 
