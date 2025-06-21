@@ -44,5 +44,5 @@ export function SettingsChecker({ children }: SettingsCheckerProps) {
     return <Settings onTokenSaved={() => {}} />;
   }
 
-  return <>{children}</>;
+  return <div className="h-full w-full">{children}</div>;
 }

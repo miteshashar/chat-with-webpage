@@ -5,11 +5,9 @@ function App() {
   return (
     <UrlProvider>
       <SettingsChecker>
-        <div className="h-full p-4">
+        <div className="flex h-full flex-col p-4">
           <UrlDisplay />
-          <div className="mt-4 text-center text-sm text-gray-500">
-            Chat interface will be loaded here based on the current tab
-          </div>
+          <div className="self-stretch overflow-auto text-center text-gray-500"></div>
         </div>
       </SettingsChecker>
     </UrlProvider>
