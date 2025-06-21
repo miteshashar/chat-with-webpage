@@ -1,7 +1,8 @@
 import { useUrl } from "../context/useUrl";
 
 export function UrlDisplay() {
-  const { currentUrl, currentTitle, setCurrentUrl, isLoading } = useUrl();
+  const { currentUrl, currentTitle, setCurrentUrl, isLoading, error } =
+    useUrl();
 
   if (isLoading) {
     return <div className="text-gray-500">Loading current page...</div>;
@@ -37,6 +38,13 @@ export function UrlDisplay() {
             }}
           />
           <p className="text-xs text-gray-500">Press Enter to set the URL</p>
+          {error && (
+            <div className="rounded-md border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-800">
+                <strong>Error:</strong> {error}
+              </p>
+            </div>
+          )}
         </div>
       ) : currentUrl ? (
         <div className="space-y-1">

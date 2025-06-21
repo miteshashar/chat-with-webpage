@@ -8,3 +8,5 @@ export async function sha256Hash(text: string): Promise<string> {
     .join("");
   return hashHex;
 }
+
+export * from "./utils/webScraping";

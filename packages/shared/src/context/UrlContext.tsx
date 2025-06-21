@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import TurndownService from "turndown";
 import { UrlContext } from "./UrlContextTypes";
 import { saveMarkdownCache, getMarkdownCache } from "../storage";
+import { fetchWebpage, WebScrapingError } from "../utils";
 
 interface UrlProviderProps {
   children: ReactNode;
@@ -66,9 +67,60 @@ export function UrlProvider({ children }: UrlProviderProps) {
   const [currentHtml, setCurrentHtml] = useState<string | null>(null);
   const [currentMarkdown, setCurrentMarkdown] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const setCurrentUrl = (url: string) => {
-    setCurrentUrlState(url);
+  const setCurrentUrl = async (url: string) => {
+    // Only allow manual URL setting in web environment, not extension
+    const isExtension =
+      typeof chrome !== "undefined" &&
+      chrome.runtime &&
+      chrome.runtime.getManifest;
+
+    if (isExtension) {
+      // In extension, URLs are set automatically by background script
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    // Check cache first
+    const cached = await getMarkdownCache(url);
+
+    if (cached && cached.url === url) {
+      // Use cached data
+      setCurrentUrlState(url);
+      setCurrentTitle(cached.title);
+      setCurrentHtml(""); // We don't cache HTML
+      setCurrentMarkdown(cached.markdown);
+      setIsLoading(false);
+      return;
+    }
+
+    // Cache miss - try to fetch the webpage (WEB ONLY)
+    try {
+      const result = await fetchWebpage(url);
+      await processPageData(url, result.title, result.html, {
+        setCurrentUrlState,
+        setCurrentTitle,
+        setCurrentHtml,
+        setCurrentMarkdown,
+      });
+    } catch (error) {
+      if (error instanceof WebScrapingError) {
+        setError(error.message);
+      } else {
+        setError("An unknown error occurred while fetching the webpage.");
+      }
+
+      // Clear state on error
+      setCurrentUrlState(null);
+      setCurrentTitle(null);
+      setCurrentHtml(null);
+      setCurrentMarkdown(null);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -155,6 +207,7 @@ export function UrlProvider({ children }: UrlProviderProps) {
         currentMarkdown,
         setCurrentUrl,
         isLoading,
+        error,
       }}
     >
       {children}

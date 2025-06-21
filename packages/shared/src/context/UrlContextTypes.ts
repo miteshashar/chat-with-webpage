@@ -7,6 +7,7 @@ export interface UrlContextType {
   currentMarkdown: string | null;
   setCurrentUrl: (url: string) => void;
   isLoading: boolean;
+  error: string | null;
 }
 
 export const UrlContext = createContext<UrlContextType | undefined>(undefined);
