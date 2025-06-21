@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { getToken } from "../storage";
+import { getToken, onChange } from "../storage";
 import { Settings } from "./Settings";
 
 interface SettingsCheckerProps {
@@ -24,6 +24,16 @@ export function SettingsChecker({ children }: SettingsCheckerProps) {
     };
 
     checkToken();
+
+    // Listen for real-time token changes
+    const unsubscribe = onChange<string>(
+      "openai_token",
+      (newToken: string | null) => {
+        setToken(newToken);
+      },
+    );
+
+    return unsubscribe;
   }, []);
 
   if (loading) {
@@ -31,7 +41,7 @@ export function SettingsChecker({ children }: SettingsCheckerProps) {
   }
 
   if (!token) {
-    return <Settings onTokenSaved={() => setToken("saved")} />;
+    return <Settings onTokenSaved={() => {}} />;
   }
 
   return <>{children}</>;
