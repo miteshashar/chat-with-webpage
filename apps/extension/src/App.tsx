@@ -1,4 +1,9 @@
-import { SettingsChecker, UrlProvider, UrlDisplay } from "shared";
+import {
+  SettingsChecker,
+  UrlProvider,
+  UrlDisplay,
+  ChatInterface,
+} from "shared";
 import "./App.css";
 
 function App() {
@@ -7,7 +12,7 @@ function App() {
       <SettingsChecker>
         <div className="flex h-full flex-col p-4">
           <UrlDisplay />
-          <div className="self-stretch overflow-auto text-center text-gray-500"></div>
+          <ChatInterface />
         </div>
       </SettingsChecker>
     </UrlProvider>

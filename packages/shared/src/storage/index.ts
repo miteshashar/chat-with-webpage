@@ -3,3 +3,6 @@ export { get, set, remove, onChange } from "./storage";
 
 // Token-specific helpers
 export { getToken, setToken, removeToken, isValidToken } from "./token";
+
+// Chat-specific helpers
+export { saveMessage, getMessagesForUrl, type Message } from "./chat";

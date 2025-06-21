@@ -163,6 +163,42 @@ class SimpleStorage {
     });
   }
 
+  async getAllKeys(): Promise<string[]> {
+    if (await this.shouldUseExtension()) {
+      return this.getAllKeysFromExtension();
+    }
+    return this.getAllKeysFromIndexedDB();
+  }
+
+  private async getAllKeysFromExtension(): Promise<string[]> {
+    const extensionId = localStorage.getItem("extension_id")!;
+
+    return new Promise((resolve) => {
+      chrome.runtime.sendMessage(
+        extensionId,
+        { type: "GET_ALL_KEYS" },
+        (response) => {
+          resolve(response?.keys || []);
+        },
+      );
+    });
+  }
+
+  private async getAllKeysFromIndexedDB(): Promise<string[]> {
+    try {
+      const db = await this.getDB();
+      return new Promise((resolve, reject) => {
+        const transaction = db.transaction(["storage"], "readonly");
+        const store = transaction.objectStore("storage");
+        const request = store.getAllKeys();
+        request.onerror = () => reject(request.error);
+        request.onsuccess = () => resolve(request.result as string[]);
+      });
+    } catch {
+      return [];
+    }
+  }
+
   private notifyOtherContext<T>(key: string, value: T): void {
     if (isExtension) {
       // Extension notifies web tabs
@@ -237,3 +273,4 @@ export const set = <T>(key: string, value: T) => storage.set(key, value);
 export const remove = (key: string) => storage.remove(key);
 export const onChange = <T>(key: string, callback: (value: T | null) => void) =>
   storage.onChange(key, callback);
+export const getAllKeys = () => storage.getAllKeys();

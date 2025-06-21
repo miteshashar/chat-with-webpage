@@ -1508,6 +1508,7 @@ __metadata:
     globals: "npm:^16.2.0"
     husky: "npm:^9.1.7"
     lint-staged: "npm:^15.2.11"
+    openai: "npm:^5.6.0"
     prettier: "npm:^3.4.5"
     prettier-plugin-tailwindcss: "npm:^0.6.13"
     react: "npm:^19.1.0"
@@ -3196,6 +3197,23 @@ __metadata:
   dependencies:
     mimic-function: "npm:^5.0.0"
   checksum: 10c0/5cb9179d74b63f52a196a2e7037ba2b9a893245a5532d3f44360012005c9cadb60851d56716ebff18a6f47129dab7168022445df47c2aff3b276d92585ed1221
+  languageName: node
+  linkType: hard
+
+"openai@npm:^5.6.0":
+  version: 5.6.0
+  resolution: "openai@npm:5.6.0"
+  peerDependencies:
+    ws: ^8.18.0
+    zod: ^3.23.8
+  peerDependenciesMeta:
+    ws:
+      optional: true
+    zod:
+      optional: true
+  bin:
+    openai: bin/cli
+  checksum: 10c0/654b461c1dcff73513b0acd1a3a64900847b3693deee48bf0c6abc55b2aed1289f26b29b71718161cf0654490ae4656fda9333e2a01d054336b603f3223768ab
   languageName: node
   linkType: hard
 

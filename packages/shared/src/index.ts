@@ -10,3 +10,9 @@ export * from "./components";
 export * from "./context/UrlContext";
 export * from "./context/UrlContextTypes";
 export * from "./context/useUrl";
+
+// Services
+export * from "./services";
+
+// Utils
+export * from "./utils";

@@ -135,6 +135,16 @@ function handleStorageMessage(
       const deleteRequest = store.delete(msg.key);
       deleteRequest.onsuccess = () => sendResponse({ success: true });
       deleteRequest.onerror = () => sendResponse({ success: false });
+    } else if (msg.type === "GET_ALL_KEYS") {
+      if (!db.objectStoreNames.contains("storage")) {
+        sendResponse({ keys: [] });
+        return;
+      }
+      const transaction = db.transaction(["storage"], "readonly");
+      const store = transaction.objectStore("storage");
+      const keysRequest = store.getAllKeys();
+      keysRequest.onsuccess = () => sendResponse({ keys: keysRequest.result });
+      keysRequest.onerror = () => sendResponse({ keys: [] });
     }
   };
 
