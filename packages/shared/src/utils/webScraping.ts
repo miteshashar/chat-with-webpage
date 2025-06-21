@@ -16,42 +16,57 @@ export class WebScrapingError extends Error {
   }
 }
 
+const BACKEND_PROXY_URL = "http://localhost:3000";
+
 export const fetchWebpage = async (url: string): Promise<WebPageData> => {
   try {
-    const response = await fetch(url);
+    const proxyResponse = await fetch(`${BACKEND_PROXY_URL}/fetch`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ url }),
+    });
 
-    if (!response.ok) {
-      throw new Error(`HTTP ${response.status}: ${response.statusText}`);
+    if (!proxyResponse.ok) {
+      const errorData = await proxyResponse.json();
+
+      if (errorData.type === "ROBOTS_DISALLOWED") {
+        throw new WebScrapingError(
+          "ANTI_SCRAPING",
+          "Access denied by robots.txt. This website doesn't allow automated access.",
+        );
+      }
+
+      if (errorData.type === "TIMEOUT") {
+        throw new WebScrapingError(
+          "GENERIC",
+          "Request timeout. The website took too long to respond.",
+        );
+      }
+
+      throw new Error(errorData.message || "Proxy fetch failed");
     }
 
-    const html = await response.text();
-
-    // Extract title from HTML
-    const titleMatch = html.match(/<title[^>]*>([^<]*)<\/title>/i);
-    const title = titleMatch ? titleMatch[1].trim() : new URL(url).hostname;
-
-    return { html, title };
-  } catch (error) {
-    // Check for CORS errors (most common case)
+    const result = await proxyResponse.json();
+    return result.data as WebPageData;
+  } catch (proxyError) {
+    // If proxy fails, check if it's a connection error to proxy
     if (
-      error instanceof TypeError &&
-      (error.message.includes("Failed to fetch") ||
-        error.message.includes("CORS") ||
-        error.message.includes("Network request failed"))
+      proxyError instanceof TypeError &&
+      proxyError.message.includes("Failed to fetch")
     ) {
       throw new WebScrapingError(
         "CORS_ERROR",
-        "This webpage cannot be accessed due to CORS restrictions. Please use the Chrome extension to analyze this page.",
+        "Unable to access webpage. Please ensure the backend proxy server is running on port 3000, or use the Chrome extension.",
       );
     }
 
-    // Check for common anti-scraping indicators
-    if (error instanceof Error) {
+    // Handle other proxy errors
+    if (proxyError instanceof Error) {
       if (
-        error.message.includes("403") ||
-        error.message.includes("blocked") ||
-        error.message.includes("captcha") ||
-        error.message.includes("bot")
+        proxyError.message.includes("403") ||
+        proxyError.message.includes("blocked")
       ) {
         throw new WebScrapingError(
           "ANTI_SCRAPING",
@@ -60,17 +75,11 @@ export const fetchWebpage = async (url: string): Promise<WebPageData> => {
       }
     }
 
-    // For any other fetch-related errors, assume CORS/security issue
-    if (error instanceof TypeError) {
-      throw new WebScrapingError(
-        "CORS_ERROR",
-        "This webpage cannot be accessed directly from the browser. Please use the Chrome extension to analyze this page.",
-      );
-    }
-
     throw new WebScrapingError(
       "GENERIC",
-      error instanceof Error ? error.message : "Unknown error occurred",
+      proxyError instanceof Error
+        ? proxyError.message
+        : "Unknown error occurred",
     );
   }
 };
