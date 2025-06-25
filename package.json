@@ -15,12 +15,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "type-check": "yarn workspaces foreach -A run type-check",
-    "prepare": "husky",
-    "postinstall": "yarn playwright install"
+    "prepare": "husky"
   },
   "dependencies": {
     "openai": "^5.6.0",
-    "playwright": "^1.53.1",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",
     "turndown": "^7.2.0"
