@@ -37,6 +37,7 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: "20"
+          cache: "yarn"
 
       - name: Enable Corepack
         run: corepack enable
@@ -66,53 +67,11 @@ jobs:
           tar -cvzf release-artifacts/chrome-extension.tar.gz -C release-artifacts chat-with-webpage/chrome-extension
           tar -cvzf release-artifacts/chat-with-webpage.tar.gz -C release-artifacts chat-with-webpage
 
-      - name: Create Release
-        id: create_release
-        uses: actions/create-release@v1
+      - name: Upload Artifacts
+        uses: svenstaro/upload-release-action@v2
         with:
-          tag_name: ${{ steps.package-version.outputs.version }}
-          release_name: Release ${{ steps.package-version.outputs.version }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Backend
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release-artifacts/backend.tar.gz
-          asset_name: backend.tar.gz
-          asset_content_type: application/gzip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Web App
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release-artifacts/web-app.tar.gz
-          asset_name: web-app.tar.gz
-          asset_content_type: application/gzip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Extension
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release-artifacts/chrome-extension.tar.gz
-          asset_name: chrome-extension.tar.gz
-          asset_content_type: application/gzip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Upload Full Package
-        uses: actions/upload-release-asset@v1
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./release-artifacts/chat-with-webpage.tar.gz
-          asset_name: chat-with-webpage.tar.gz
-          asset_content_type: application/gzip
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          repo_token: ${{ secrets.GITHUB_TOKEN }}
+          file: release-artifacts/*.tar.gz
+          file_glob: true
+          tag: ${{ steps.package-version.outputs.version }}
+          overwrite: true
