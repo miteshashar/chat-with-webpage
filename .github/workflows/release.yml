@@ -70,9 +70,11 @@ jobs:
           cp apps/backend/package.json release-artifacts/chat-with-webpage/backend/package.json
           cp -r apps/extension/dist release-artifacts/chat-with-webpage/chrome-extension
           cp -r apps/web/dist release-artifacts/chat-with-webpage/web-app
-          tar -cvzf release-artifacts/backend.tar.gz -C release-artifacts chat-with-webpage/backend
-          tar -cvzf release-artifacts/web-app.tar.gz -C release-artifacts chat-with-webpage/web-app
-          tar -cvzf release-artifacts/chrome-extension.tar.gz -C release-artifacts chat-with-webpage/chrome-extension
+          cp .ci/chat-with-webpage/instructions.md release-artifacts/chat-with-webpage/
+          cp .ci/chat-with-webpage/web-app/run.sh release-artifacts/chat-with-webpage/web-app/
+          tar -cvzf release-artifacts/backend.tar.gz -C release-artifacts chat-with-webpage/backend chat-with-webpage/instructions.md
+          tar -cvzf release-artifacts/web-app.tar.gz -C release-artifacts chat-with-webpage/web-app chat-with-webpage/instructions.md
+          tar -cvzf release-artifacts/chrome-extension.tar.gz -C release-artifacts chat-with-webpage/chrome-extension chat-with-webpage/instructions.md
           tar -cvzf release-artifacts/chat-with-webpage.tar.gz -C release-artifacts chat-with-webpage
 
       - name: Upload Artifacts
