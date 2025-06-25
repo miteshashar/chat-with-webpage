@@ -1,0 +1,65 @@
+name: Build and Release
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Enable Corepack
+        run: corepack enable
+
+      - name: Install dependencies
+        run: yarn install --immutable
+
+      - name: Type check
+        run: yarn type-check
+
+      - name: Lint
+        run: yarn lint
+
+      - name: Build all packages
+        run: yarn build
+
+      - name: Create release archives
+        run: |
+          # Create dist directory for release artifacts
+          mkdir -p release-artifacts
+
+          # Backend
+          cd apps/backend
+          tar -czf ../../release-artifacts/backend.tar.gz dist/ package.json
+          cd ../..
+
+          # Web app
+          cd apps/web
+          tar -czf ../../release-artifacts/web-app.tar.gz dist/
+          cd ../..
+
+          # Extension
+          cd apps/extension
+          tar -czf ../../release-artifacts/browser-extension.tar.gz dist/ manifest.json
+          cd ../..
+
+      - name: Create Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: |
+            release-artifacts/backend.tar.gz
+            release-artifacts/web-app.tar.gz
+            release-artifacts/browser-extension.tar.gz
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
