@@ -58,9 +58,9 @@ jobs:
           mkdir -pv release-artifacts/chat-with-webpage
           cp -r apps/backend/dist release-artifacts/chat-with-webpage/backend
           cp apps/backend/package.json release-artifacts/chat-with-webpage/backend/package.json
-          cp apps/extension/dist release-artifacts/chat-with-webpage/chrome-extension
+          cp -r apps/extension/dist release-artifacts/chat-with-webpage/chrome-extension
           cp apps/extension/manifest.json release-artifacts/chat-with-webpage/chrome-extension/manifest.json
-          cp apps/web/dist release-artifacts/chat-with-webpage/web-app
+          cp -r apps/web/dist release-artifacts/chat-with-webpage/web-app
           tar -cvzf release-artifacts/backend.tar.gz -C release-artifacts chat-with-webpage/backend
           tar -cvzf release-artifacts/web-app.tar.gz -C release-artifacts chat-with-webpage/web-app
           tar -cvzf release-artifacts/chrome-extension.tar.gz -C release-artifacts chat-with-webpage/chrome-extension
